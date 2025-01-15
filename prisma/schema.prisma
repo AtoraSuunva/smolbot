@@ -1,0 +1,362 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  // See https://github.com/prisma/prisma/issues/19729, watch in case this changes
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model WelcomeSettings {
+  guildID     String   @id @map("guild_id")
+  message     String
+  channel     String?
+  rejoins     Boolean  @default(false)
+  instant     Boolean  @default(false)
+  ignoreRoles String   @default("") @map("ignore_roles")
+  reactWith   String?  @map("react_with")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+}
+
+model WelcomeJoins {
+  guildID String @map("guild_id")
+  userID  String @map("user_id")
+
+  @@id([guildID, userID])
+}
+
+model ReportConfig {
+  guildID   String   @id @map("guild_id")
+  enabled   Boolean
+  channelID String?  @map("channel_id")
+  message   String
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model UserReport {
+  reportID  String   @id @default(cuid()) @map("report_id")
+  guildID   String   @map("guild_id")
+  userID    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+}
+
+model ReportBan {
+  guildID   String   @map("guild_id")
+  userID    String   @map("user_id")
+  reason    String
+  moderator String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([guildID, userID])
+}
+
+model VoiceLogConfig {
+  guildID   String   @id @map("guild_id")
+  channelID String   @map("channel_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model ModLogConfig {
+  guildID   String   @id @map("guild_id")
+  channelID String   @map("channel_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  enabled   Boolean  @default(false)
+
+  memberAdd         Boolean @default(false) @map("member_add")
+  memberAddNew      Int     @default(0) @map("member_add_new")
+  memberAddInvite   Boolean @default(false) @map("member_add_invite")
+  memberWelcome     Boolean @default(false) @map("member_welcome")
+  memberRemove      Boolean @default(false) @map("member_remove")
+  memberRemoveRoles Boolean @default(false) @map("member_remove_roles")
+  memberBan         Boolean @default(false) @map("member_ban")
+  memberUnban       Boolean @default(false) @map("member_unban")
+  userUpdate        String  @default("None") @map("user_update")
+  messageDelete     Boolean @default(false) @map("message_delete")
+  messageDeleteBulk Boolean @default(false) @map("message_delete_bulk")
+  channelCreate     Boolean @default(false) @map("channel_create")
+  channelDelete     Boolean @default(false) @map("channel_delete")
+  channelUpdate     Boolean @default(false) @map("channel_update")
+  reactionActions   Boolean @default(false) @map("reaction_actions")
+  automodAction     Boolean @default(false) @map("automod_action")
+  reactionRemove    Boolean @default(false) @map("reaction_remove")
+  reactionTime      Int     @default(0) @map("reaction_time")
+}
+
+model ModLogChannels {
+  guildID   String   @id @map("guild_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberAdd         String? @map("member_add")
+  memberWelcome     String? @map("member_welcome")
+  memberRemove      String? @map("member_remove")
+  memberBan         String? @map("member_ban")
+  memberUnban       String? @map("member_unban")
+  userUpdate        String? @map("user_update")
+  messageDelete     String? @map("message_delete")
+  messageDeleteBulk String? @map("message_delete_bulk")
+  channelCreate     String? @map("channel_create")
+  channelDelete     String? @map("channel_delete")
+  channelUpdate     String? @map("channel_update")
+  automodAction     String? @map("automod_action")
+  reactionRemove    String? @map("reaction_remove")
+}
+
+model WarningConfig {
+  guildID        String   @id @map("guild_id")
+  expiresAfter   Int      @map("expires_after")
+  archiveEnabled Boolean  @default(false) @map("archive_enabled")
+  archiveChannel String?  @map("archive_channel")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+}
+
+model WarningDirtyTracker {
+  guildID      String   @id @map("guild_id")
+  lastSetDirty DateTime @map("last_set_dirty")
+  isDirty      Boolean  @map("is_dirty")
+}
+
+model Warning {
+  guildID   String @map("guild_id")
+  warningID Int    @map("warning_id")
+  version   Int
+
+  user        String
+  userID      String    @map("user_id")
+  reason      String
+  permanent   Boolean   @default(false)
+  void        Boolean   @default(false)
+  moderatorID String?   @map("moderator_id")
+  modNote     String?   @map("mod_note")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  validUntil  DateTime? @map("valid_until")
+
+  @@id([guildID, warningID, version])
+}
+
+model AutomodConfig {
+  guildID String  @id @map("guild_id")
+  // Message to prepend to the automod trigger message
+  prepend String?
+}
+
+model AutomodRule {
+  ruleID      Int     @id @map("rule_id")
+  guildID     String  @map("guild_id")
+  // Discriminator between rule types, bot-set
+  type        String
+  // Description shown to admins when viewing rules
+  description String  @map("name")
+  // Message shown to users when rule is triggered
+  message     String
+  // Action to apply
+  action      String
+  // Whether to delete the message(s) that triggered the rule
+  delete      Boolean
+  // Parameters the rule takes, as JSON
+  parameters  String
+}
+
+model AutomaticDehoist {
+  guildID         String   @id @map("guild_id")
+  enabled         Boolean
+  hoistCharacters String   @map("hoist_characters")
+  dehoistPrepend  String   @map("dehoist_prepend")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+}
+
+model MuteConfig {
+  guildID      String  @id @map("guild_id")
+  roleID       String? @map("role_id")
+  logChannelID String? @map("log_channel_id")
+
+  separateUsers  Boolean @default(false) @map("separate_users")
+  categoryID     String? @map("category_id")
+  channelTopic   String? @map("channel_topic")
+  nameTemplate   String? @map("name_template")
+  maxChannels    Int?    @map("max_channels")
+  starterMessage String? @map("starter_message")
+}
+
+model MemberMutes {
+  guildID       String   @map("guild_id")
+  userID        String   @map("user_id")
+  previousRoles String   @map("previous_roles")
+  muteChannel   String?  @map("mute_channel")
+  executor      String?  @map("executor")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@id([guildID, userID])
+}
+
+model ActionLogConfig {
+  guildID            String   @id @map("guild_id")
+  logBans            Boolean  @map("log_bans")
+  logUnbans          Boolean  @map("log_unbans")
+  logKicks           Boolean  @map("log_kicks")
+  logTimeouts        Boolean  @map("log_timeouts")
+  logTimeoutRemovals Boolean  @map("log_timeout_removals")
+  logChannelID       String?  @map("log_channel_id")
+  archiveEnabled     Boolean  @default(false) @map("archive_enabled")
+  archiveChannel     String?  @map("archive_channel")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+}
+
+model ActionLogDirtyTracker {
+  guildID      String   @id @map("guild_id")
+  lastSetDirty DateTime @map("last_set_dirty")
+  isDirty      Boolean  @map("is_dirty")
+}
+
+model ActionLog {
+  guildID  String @map("guild_id")
+  actionID Int    @map("action_id")
+  version  Int
+
+  action      String
+  userID      String?   @map("user_id")
+  redactUser  Boolean   @default(false) @map("redact_user")
+  reason      String?
+  reasonByID  String?   @map("reason_by_id")
+  moderatorID String?   @map("moderator_id")
+  channelID   String    @map("channel_id")
+  messageID   String?   @map("message_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  validUntil  DateTime? @map("valid_until")
+
+  @@id([guildID, actionID, version])
+}
+
+model AntiRaidConfig {
+  guildID         String  @id @map("guild_id")
+  enabled         Boolean
+  action          String
+  timeoutDuration Int     @map("timeout_duration")
+  threshold       Float
+  reason          String?
+  logChannelID    String? @map("log_channel_id")
+
+  accountAgeLimitMin     Float @map("account_age_limit_min")
+  accountAgeLimitMax     Float @map("account_age_limit_max")
+  accountAgeWeight       Float @map("account_age_weight")
+  noProfilePictureWeight Float @map("no_profile_picture_weight")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model DeletePoliceConfig {
+  guildID        String  @id @map("guild_id")
+  enabled        Boolean
+  // Time in seconds until a message is no longer considered "quick deleted"
+  threshold      Int
+  // Time in seconds that can be randomly added to the quick delete time, i.e. threshold = 10, fuzziness = 5, message is considered quick deleted if deleted within 10-15 seconds (random limit)
+  fuzziness      Int
+  // Message added to the repost footer
+  footerMessage  String? @map("footer_message")
+  ignoreBots     Boolean @default(true) @map("ignore_bots")
+  ignoreMods     Boolean @default(true) @map("ignore_mods")
+  ignoreStickers Boolean @default(false) @map("ignore_stickers")
+  // Only repost if the user deleted it themselves (bot-deleted messages don't cause audit log entries and may still be reposted)
+  onlySelfDelete Boolean @default(false) @map("only_self_delete")
+  // Time (in ms) to give bots to delete the message. There's no reliable way to check for bot deletes besides "it was inhumanly fast"
+  botGraceTimeMs Int     @default(0) @map("bot_grace_time_ms")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model ModMailConfig {
+  guildID String @id @map("guild_id")
+
+  modReplyPrefix     String @default("!r") @map("mod_reply_prefix")
+  modAnonReplyPrefix String @default("!a") @map("mod_anon_reply_prefix")
+  modTeamName        String @default("Mod Team") @map("mod_team_name")
+}
+
+model ModMailForumConfig {
+  guildID   String @map("guild_id")
+  channelID String @map("channel_id")
+
+  openTag   String? @map("open_tag")
+  closedTag String? @map("closed_tag")
+
+  @@id([guildID, channelID])
+}
+
+model ModMailTicketConfig {
+  modmailID String @map("modmail_id")
+  guildID   String @map("guild_id")
+
+  maxOpenTickets Int?     @map("max_open_tickets")
+  ratelimit      Int?
+  invitable      Boolean?
+
+  @@id([modmailID, guildID])
+}
+
+model ModMailTicket {
+  ticketID  Int    @id @default(autoincrement()) @map("ticket_id")
+  modmailID String @map("modmail_id")
+  guildID   String @map("guild_id")
+
+  userID        String @map("user_id")
+  userChannelID String @map("user_channel_id")
+  userThreadID  String @map("user_thread_id")
+  modChannelID  String @map("mod_channel_id")
+  modThreadID   String @map("mod_thread_id")
+
+  // true if a channel/thread was deleted (which is unrecoverable except for DB editing)
+  linkDeleted Boolean @default(false) @map("link_deleted")
+  open        Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model ModMailTicketMessage {
+  userMessageID    String @id @map("user_message_id")
+  webhookMessageID String @map("webhook_message_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+}
+
+model ModMailTicketModalField {
+  // Mod-given Id for this set of fields
+  modmailID String @map("modmail_id")
+  // The guild Id for the guild this set of fields is for
+  guildID   String @map("guild_id")
+  // Mod-given custom Id for this field specifically
+  customID  String @map("custom_id")
+
+  order       Int
+  label       String
+  style       Int
+  placeholder String?
+  required    Boolean?
+  minLength   Int?     @map("min_length")
+  maxLength   Int?     @map("max_length")
+  useAsTitle  Boolean? @map("use_as_title")
+
+  @@id([modmailID, guildID, customID])
+}
+
+model RevokeConfig {
+  guildID String @id @map("guild_id")
+
+  enabled   Boolean @default(false)
+  channelID String?
+}
+
+model LockThreadConfig {
+  sourceChannelID String  @id @map("source_channel_id")
+  logChannelID    String? @map("log_channel_id")
+}
+
+model QuoteConfig {
+  guildID String @id @map("guild_id")
+
+  enabled Boolean @default(true)
+}
