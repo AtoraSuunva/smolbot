@@ -1,4 +1,11 @@
 node_modules
-ecosystem.config.js
-err.log
-.env
+.tsbuildinfo
+*.env
+.vscode
+.swc
+dist/
+prisma/db/
+prisma/**/*.db
+prisma/**/*.sqlite
+csv
+src/import-parse.ts
